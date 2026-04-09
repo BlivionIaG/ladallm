@@ -217,6 +217,9 @@ Pre-commit hooks run automatically on `git commit` to check code quality.
 
 **Setup (run once):**
 ```bash
+# Make sure to activate the virtual environment first
+source .venv/bin/activate
+
 pip install -e ".[dev]"
 pre-commit install
 ```
