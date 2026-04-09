@@ -211,6 +211,35 @@ Every time a feature is completed and validated (before starting the next one), 
 
 Include a brief body explaining what was added and where it lives in the codebase. One commit per feature.
 
+### Code quality
+
+Pre-commit hooks run automatically on `git commit` to check code quality.
+
+**Setup (run once):**
+```bash
+pip install -e ".[dev]"
+pre-commit install
+```
+
+**What runs on every commit:**
+- Trailing whitespace removal
+- End-of-file fixer
+- YAML syntax check
+- Large file check (>1MB)
+- Pylint on staged Python files
+
+**Bypass (not recommended):**
+```bash
+git commit --no-verify
+```
+
+**Run manually on all files:**
+```bash
+pre-commit run --all-files
+```
+
+Configuration in `.pre-commit-config.yaml` and `pyproject.toml`.
+
 ## Project context
 
 - **Target OpenCL hardware is VRAM-limited.** This drives v2 (quantization) to land before v4 (ROCm). Designs that assume plenty of VRAM will not work on the actual test hardware.
