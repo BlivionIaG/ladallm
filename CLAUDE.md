@@ -182,9 +182,34 @@ Code-without-doc is a bug. If you are tempted to skip the feature doc because "t
 
 1. Find the feature in the relevant `docs/vN/README.md` index. It should exist there already (if not, propose adding it before implementing).
 2. Create or finalize its feature doc from the template **before or alongside** writing code.
-3. Write the code. Annotate shapes. Add tests per the feature doc's "How to test it" section.
-4. Mark the feature `◐ in progress` or `✓ done` in the index.
-5. Walk the user through what you did and what concepts it embodies.
+3. Write the code. Annotate shapes. Validate it works.
+4. Create unit tests for the feature.
+5. Mark the feature `◐ in progress` or `✓ done` in the index.
+6. Walk the user through what you did and what concepts it embodies.
+7. **Commit the feature** (see committing guidelines below).
+
+### Committing completed features
+
+Every time a feature is completed and validated (before starting the next one), **it must be committed**. This keeps the git history clean and tracks progress incrementally.
+
+**Commit includes:**
+- Implementation code
+- Unit tests for the feature
+- Updated documentation (feature doc + index)
+
+**Commit message style:**
+- Synthetic and concise
+- Straight to the point
+- No verbose explanations
+
+**Format:** `F{N}: {Feature name}`
+
+**Examples:**
+- `F1: Add weight loading (Safetensors)`
+- `F2: Add RMSNorm normalization`
+- `F3: Implement RoPE embedding`
+
+Include a brief body explaining what was added and where it lives in the codebase. One commit per feature.
 
 ## Project context
 

@@ -1,0 +1,6 @@
+.venv
+.claude
+.codex
+.sisyphus
+models/
+**_pycache**
