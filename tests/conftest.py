@@ -10,7 +10,6 @@ import pytest
 def temp_safetensors_file():
     """Create a temporary safetensors file for testing."""
     import json
-    import os
     import struct
 
     def _create(tensors, dtype_override=None):
@@ -31,6 +30,7 @@ def temp_safetensors_file():
 
         try:
             import ml_dtypes
+
             dtype_map[ml_dtypes.bfloat16] = "BF16"
         except ImportError:
             pass
