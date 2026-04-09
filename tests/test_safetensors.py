@@ -257,7 +257,7 @@ class TestSafetensorsLoading:
             os.unlink(path)
 
 
-class TestSafetensorsEdgeCases:
+class TestSafetensorsEdgeCases(TestSafetensorsLoading):
     """Test edge cases and error conditions."""
 
     def test_empty_tensor(self):

@@ -169,7 +169,7 @@ This is a learning project. The goal is understanding, not production code.
 
 ## License
 
-[Add your license here]
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Further Reading
 

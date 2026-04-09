@@ -88,8 +88,8 @@ class TestRMSNormMath:
         x = np.array([[1e-8, 1e-8]], dtype=np.float32)
         weight = np.ones(2, dtype=np.float32)
 
-        out_small_eps = rms_norm(x, weight, eps=1e-6)
-        out_large_eps = rms_norm(x, weight, eps=1e-3)
+        _out_small_eps = rms_norm(x, weight, eps=1e-6)
+        _out_large_eps = rms_norm(x, weight, eps=1e-3)
 
         # Smaller epsilon → less damping → larger output
         rms_small = np.sqrt(np.mean(x**2) + 1e-6)

@@ -1,3 +1,9 @@
+"""Safetensors weight loader for LadaLLM.
+
+Provides memory-mapped loading of HuggingFace safetensors format
+for efficient model weight access without copying data.
+"""
+
 import json
 import mmap
 import struct
@@ -7,6 +13,12 @@ import numpy as np
 
 
 class Safetensors:
+    """Memory-mapped safetensors loader.
+
+    Loads model weights from safetensors files with zero-copy
+    tensor views via memory mapping.
+    """
+
     DTYPE_MAP = {
         "bool": (np.bool_, 1),
         "u8": (np.uint8, 1),
@@ -24,11 +36,17 @@ class Safetensors:
     }
 
     def close(self) -> None:
+        """Close the memory map and release resources."""
         if self._mmap is not None:
             self._mmap.close()
             self._mmap = None
 
     def __init__(self, path: str):
+        """Load safetensors file from path.
+
+        Args:
+            path: Path to .safetensors file
+        """
         self.header_length: int
         self.header: dict = {}
         self.tensor_data: dict = {}
@@ -40,7 +58,6 @@ class Safetensors:
                 8 + self.header_length + (8 - (8 + self.header_length) % 8) % 8
             )  # 8 + header size + padding
 
-            # Memory map the file
             self._mmap = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
 
             for name, info in self.header.items():
