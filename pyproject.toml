@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ladallm"
+version = "0.0.1"
+description = "LadaLLM - Learning AI inference from scratch"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24.0",
+    "ml_dtypes>=0.4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.scripts]
+ladallm = "ladallm.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ladallm"]
