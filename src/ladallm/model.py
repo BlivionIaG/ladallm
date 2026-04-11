@@ -206,7 +206,6 @@ class ModelLayer:
             q,
             k_cached,
             v_cached,
-            head_dim=self.head_dim,
             num_kv_heads=self.num_kv_heads,
             num_heads=self.num_heads,
             attn_scale=self.attn_scale,

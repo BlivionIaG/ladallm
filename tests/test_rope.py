@@ -41,7 +41,7 @@ class TestPrecomputeRopeTables:
 
     def test_increasing_angles_with_position(self):
         """Angles should increase with position (monotonic in some dimensions)."""
-        cos_table, sin_table = precompute_rope_tables(max_seq_len=10, head_dim=4)
+        cos_table, _ = precompute_rope_tables(max_seq_len=10, head_dim=4)
 
         # First dimension pair has smallest frequency, should change slowly
         # Still, cos should generally decrease from position 0

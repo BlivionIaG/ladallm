@@ -1,7 +1,6 @@
 """Unit tests for F4: Attention + KV-cache reads."""
 
 import numpy as np
-import pytest
 
 from ladallm.attention import (
     attention_forward,
@@ -175,14 +174,13 @@ class TestAttentionForward:
         """GQA: K and V should be repeated to match Q head count."""
         seq_len, num_heads, head_dim = 5, 6, 32
         num_kv_heads = 2
-        group_size = num_heads // num_kv_heads  # 3
 
         q = np.random.randn(seq_len, num_heads, head_dim).astype(np.float32)
         k_cache = np.ones((seq_len, num_kv_heads, head_dim), dtype=np.float32)
         v_cache = np.ones((seq_len, num_kv_heads, head_dim), dtype=np.float32)
         attn_scale = 1.0 / np.sqrt(head_dim)
 
-        out = attention_forward(q, k_cache, v_cache, head_dim, num_kv_heads, num_heads, attn_scale)
+        out = attention_forward(q, k_cache, v_cache, num_kv_heads, num_heads, attn_scale)
 
         # GQA tiling happens internally, output should be correct shape
         assert out.shape == (seq_len, num_heads, head_dim)
@@ -278,12 +276,12 @@ class TestAttentionIntegration:
         attn_scale = 1.0 / np.sqrt(head_dim)
 
         # Pipeline
-        q, k, v = compute_qkv(x_new, w_q, w_k, w_v, num_heads, num_kv_heads, head_dim)
+        q, k, _ = compute_qkv(x_new, w_q, w_k, w_v, num_heads, num_kv_heads, head_dim)
         q, k = apply_rope(q, k, positions, cos_table, sin_table)
 
         # Decode: no mask needed
         out = attention_forward(
-            q, k_cache, v_cache, head_dim, num_kv_heads, num_heads, attn_scale, mask=None
+            q, k_cache, v_cache, num_kv_heads, num_heads, attn_scale, mask=None
         )
 
         assert out.shape == (1, num_heads, head_dim)
@@ -314,6 +312,6 @@ class TestSmolLM2Config:
         # Attention
         mask = causal_mask(seq_len, seq_len)
         attn_scale = 1.0 / np.sqrt(head_dim)
-        out = attention_forward(q, k, v, head_dim, num_kv_heads, num_heads, attn_scale, mask=mask)
+        out = attention_forward(q, k, v, num_kv_heads, num_heads, attn_scale, mask=mask)
 
         assert out.shape == (seq_len, num_heads, head_dim)

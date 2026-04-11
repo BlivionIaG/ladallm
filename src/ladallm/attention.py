@@ -61,7 +61,6 @@ def attention_forward(
     q: np.ndarray,
     k_cache: np.ndarray,
     v_cache: np.ndarray,
-    head_dim: int,
     num_kv_heads: int,
     num_heads: int,
     attn_scale: float,
@@ -73,7 +72,6 @@ def attention_forward(
         q: Query tensor [num_heads, head_dim] (decode) or [seq_len, num_heads, head_dim] (prefill)
         k_cache: Cached keys [cache_len, num_kv_heads, head_dim]
         v_cache: Cached values [cache_len, num_kv_heads, head_dim]
-        head_dim: Dimension per head
         num_kv_heads: Number of KV heads
         num_heads: Number of attention heads
         attn_scale: Precomputed attention scale (1/sqrt(head_dim))
