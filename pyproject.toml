@@ -31,14 +31,16 @@ ignore-patterns = ["^\\."]
 
 [tool.pylint.messages_control]
 disable = [
-    "C0114",  # missing-module-docstring
-    "C0115",  # missing-class-docstring
-    "C0116",  # missing-function-docstring
-    "R0903",  # too-few-public-methods
-    "R0801",  # duplicate-code (common in tests)
-    "W0212",  # protected-access (tests access _mmap)
-    "C0415",  # import-outside-toplevel (fixtures need this)
-    "R0914",  # too-many-locals (test helpers are complex)
+    "C0114",
+    "C0115",
+    "C0116",
+    "R0903",
+    "R0801",
+    "W0212",
+    "C0415",
+    "R0914",
+    "R0913",
+    "R0917",
 ]
 
 [tool.pylint.format]
