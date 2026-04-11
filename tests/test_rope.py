@@ -43,8 +43,6 @@ class TestPrecomputeRopeTables:
         """Angles should increase with position (monotonic in some dimensions)."""
         cos_table, _ = precompute_rope_tables(max_seq_len=10, head_dim=4)
 
-        # First dimension pair has smallest frequency, should change slowly
-        # Still, cos should generally decrease from position 0
         assert cos_table[0, 0] > cos_table[-1, 0]
 
     def test_default_base(self):
@@ -156,17 +154,11 @@ class TestApplyRopeMath:
 
     def test_90_degree_rotation(self):
         """Test known rotation: 90 degrees swaps and negates appropriately."""
-        # For 90 degrees: cos=0, sin=1
-        # x' = x*0 - y*1 = -y
-        # y' = x*1 + y*0 = x
-        # So [x, y] → [-y, x]
-
         # Create custom cos/sin tables for testing
-        head_dim = 2
-        cos_table = np.zeros((10, 1), dtype=np.float32)  # cos(90°) = 0
-        sin_table = np.ones((10, 1), dtype=np.float32)   # sin(90°) = 1
+        cos_table = np.zeros((10, 1), dtype=np.float32)
+        sin_table = np.ones((10, 1), dtype=np.float32)
 
-        q = np.array([[[3.0, 4.0]]], dtype=np.float32)  # x=3, y=4
+        q = np.array([[[3.0, 4.0]]], dtype=np.float32)
         k = q.copy()
         positions = np.array([0])
 
@@ -276,10 +268,8 @@ class TestApplyRopePositions:
         positions = np.array([5, 5, 5])  # Same position
         cos_table, sin_table = precompute_rope_tables(10, head_dim)
 
-        q_rot, k_rot = apply_rope(q, k, positions, cos_table, sin_table)
+        q_rot, _ = apply_rope(q, k, positions, cos_table, sin_table)
 
-        # Same position → same rotation, so outputs should be different
-        # only due to different inputs
         assert q_rot.shape == q.shape
 
     def test_position_beyond_table(self):
@@ -323,6 +313,7 @@ class TestApplyRopeDtypes:
 
         # Should work without error
         assert q_rot.shape == q.shape
+        assert k_rot.shape == k.shape
 
 
 class TestApplyRopeSmolLM2Config:
@@ -413,15 +404,15 @@ class TestRopeIntegration:
         k_input = np.random.randn(1, 1, head_dim).astype(np.float32)
 
         # Case 1: Q at position 10, K at position 5 (diff = 5)
-        q_rot_10, k_rot_5 = apply_rope(
+        q_rot_10, _ = apply_rope(
             q_input, k_input, np.array([10]), cos_table, sin_table
         )
-        q_rot_10_2, k_rot_5_2 = apply_rope(
+        _, k_rot_5 = apply_rope(
             q_input, k_input, np.array([5]), cos_table, sin_table
         )
 
         # Dot product Q_10 @ K_5
-        dot_1 = np.sum(q_rot_10 * k_rot_5_2)
+        dot_1 = np.sum(q_rot_10 * k_rot_5)
 
         # Case 2: Q at position 20, K at position 15 (same diff = 5)
         q_rot_20, _ = apply_rope(q_input, k_input, np.array([20]), cos_table, sin_table)
@@ -431,8 +422,5 @@ class TestRopeIntegration:
         dot_2 = np.sum(q_rot_20 * k_rot_15)
 
         # These should be approximately equal (same relative distance)
-        # Note: Due to different absolute positions, the actual rotations differ,
-        # but the dot product behavior follows the relative pattern
-        # This is more of a sanity check than strict equality
         assert not np.isnan(dot_1)
         assert not np.isnan(dot_2)
