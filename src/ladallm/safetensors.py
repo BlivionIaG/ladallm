@@ -7,6 +7,7 @@ for efficient model weight access without copying data.
 import json
 import mmap
 import struct
+from typing import Dict
 
 import ml_dtypes
 import numpy as np
@@ -16,7 +17,14 @@ class Safetensors:
     """Memory-mapped safetensors loader.
 
     Loads model weights from safetensors files with zero-copy
-    tensor views via memory mapping.
+    tensor views via memory mapping. This avoids loading the entire
+    model into RAM at once, enabling efficient weight access.
+
+    Attributes:
+        header_length: Size of header in bytes
+        header: Parsed header dictionary with tensor metadata
+        tensor_data: Dictionary mapping tensor names to numpy arrays
+        config: Model configuration dictionary
     """
 
     DTYPE_MAP = {
@@ -41,17 +49,27 @@ class Safetensors:
             self._mmap.close()
             self._mmap = None
 
-    def __init__(self, path: str):
+    def __init__(self, weight_path: str, config_path: str):
         """Load safetensors file from path.
 
         Args:
-            path: Path to .safetensors file
+            weight_path: Path to .safetensors file containing model weights
+            config_path: Path to config.json containing model configuration
+
+        Raises:
+            FileNotFoundError: If either path does not exist
+            ValueError: If the safetensors file is malformed
         """
         self.header_length: int
-        self.header: dict = {}
-        self.tensor_data: dict = {}
+        self.header: Dict = {}
+        self.tensor_data: Dict[str, np.ndarray] = {}
         self._mmap = None
-        with open(path, "rb") as f:
+        self.config: Dict = {}
+
+        with open(config_path, "r", encoding="utf-8") as f:
+            self.config = json.load(f)
+
+        with open(weight_path, "rb") as f:
             self.header_length = struct.unpack("<Q", f.read(8))[0]
             self.header = json.loads(f.read(self.header_length).decode("utf-8"))
             data_start = (

@@ -44,8 +44,13 @@ class TestSafetensorsLoading:
         self,
         tensors: dict[str, np.ndarray],
         dtype_override: dict[str, str] | None = None,
-    ) -> str:
-        """Create a temporary safetensors file with given tensors."""
+        config: dict | None = None,
+    ) -> tuple[str, str]:
+        """Create a temporary safetensors file with given tensors.
+
+        Returns:
+            Tuple of (safetensors_path, config_path)
+        """
         header = {}
         data_bytes = b""
         current_offset = 0
@@ -99,15 +104,34 @@ class TestSafetensorsLoading:
             f.write(b"\x00" * padding)
             # Data
             f.write(data_bytes)
-            return f.name
+            st_path = f.name
+
+        # Create config file
+        default_config = {
+            "hidden_size": 576,
+            "num_attention_heads": 9,
+            "num_key_value_heads": 3,
+            "num_hidden_layers": 30,
+            "vocab_size": 49152,
+            "max_position_embeddings": 2048,
+            "rope_theta": 10000.0,
+        }
+        if config:
+            default_config.update(config)
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
+            json.dump(default_config, f)
+            config_path = f.name
+
+        return st_path, config_path
 
     def test_load_single_tensor(self):
         """Load a single F16 tensor."""
         expected = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=np.float16)
-        path = self.create_test_file({"test": expected})
+        st_path, config_path = self.create_test_file({"test": expected})
 
         try:
-            st = Safetensors(path)
+            st = Safetensors(st_path, config_path)
             assert "test" in st.tensor_data
             actual = st.tensor_data["test"]
             assert actual.shape == (2, 2)
@@ -115,7 +139,8 @@ class TestSafetensorsLoading:
             np.testing.assert_array_almost_equal(actual, expected)
             st.close()
         finally:
-            os.unlink(path)
+            os.unlink(st_path)
+            os.unlink(config_path)
 
     def test_load_multiple_tensors(self):
         """Load multiple tensors with different shapes."""
@@ -124,17 +149,18 @@ class TestSafetensorsLoading:
             "layer1.weight": np.random.randn(64, 128).astype(np.float16),
             "layer1.bias": np.zeros(128, dtype=np.float32),
         }
-        path = self.create_test_file(tensors)
+        st_path, config_path = self.create_test_file(tensors)
 
         try:
-            st = Safetensors(path)
+            st = Safetensors(st_path, config_path)
             assert len(st.tensor_data) == 3
             assert st.tensor_data["embedding"].shape == (100, 64)
             assert st.tensor_data["layer1.weight"].shape == (64, 128)
             assert st.tensor_data["layer1.bias"].shape == (128,)
             st.close()
         finally:
-            os.unlink(path)
+            os.unlink(st_path)
+            os.unlink(config_path)
 
     @pytest.mark.parametrize("dtype_str,np_dtype", [
         ("f16", np.float16),
@@ -147,19 +173,20 @@ class TestSafetensorsLoading:
     def test_load_different_dtypes(self, dtype_str, np_dtype):
         """Test loading tensors of various dtypes."""
         expected = np.array([1, 2, 3, 4], dtype=np_dtype).reshape(2, 2)
-        path = self.create_test_file(
+        st_path, config_path = self.create_test_file(
             {"test": expected},
             dtype_override={"test": dtype_str.upper()},
         )
 
         try:
-            st = Safetensors(path)
+            st = Safetensors(st_path, config_path)
             actual = st.tensor_data["test"]
             assert actual.dtype == np_dtype
             np.testing.assert_array_almost_equal(actual, expected)
             st.close()
         finally:
-            os.unlink(path)
+            os.unlink(st_path)
+            os.unlink(config_path)
 
     def test_load_skips_metadata(self):
         """Verify __metadata__ key is skipped."""
@@ -186,23 +213,29 @@ class TestSafetensorsLoading:
             f.write(header_bytes)
             f.write(b"\x00" * padding)
             f.write(data)
-            path = f.name
+            st_path = f.name
+
+        # Create minimal config
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as f:
+            json.dump({"hidden_size": 2}, f)
+            config_path = f.name
 
         try:
-            st = Safetensors(path)
+            st = Safetensors(st_path, config_path)
             assert "__metadata__" not in st.tensor_data
             assert "tensor" in st.tensor_data
             st.close()
         finally:
-            os.unlink(path)
+            os.unlink(st_path)
+            os.unlink(config_path)
 
     def test_memory_mapping_zero_copy(self):
         """Verify tensors are views into mmap (zero-copy)."""
         expected = np.random.randn(100, 100).astype(np.float32)
-        path = self.create_test_file({"test": expected})
+        st_path, config_path = self.create_test_file({"test": expected})
 
         try:
-            st = Safetensors(path)
+            st = Safetensors(st_path, config_path)
             tensor = st.tensor_data["test"]
 
             # Check if it's a view (base should be the mmap buffer)
@@ -212,49 +245,53 @@ class TestSafetensorsLoading:
             # (This is advanced; basic check is that base exists)
             st.close()
         finally:
-            os.unlink(path)
+            os.unlink(st_path)
+            os.unlink(config_path)
 
     def test_close_releases_resources(self):
         """Test that close() properly releases mmap."""
         expected = np.array([1.0, 2.0, 3.0], dtype=np.float32)
-        path = self.create_test_file({"test": expected})
+        st_path, config_path = self.create_test_file({"test": expected})
 
         try:
-            st = Safetensors(path)
+            st = Safetensors(st_path, config_path)
             assert st._mmap is not None
             st.close()
             assert st._mmap is None
         finally:
-            os.unlink(path)
+            os.unlink(st_path)
+            os.unlink(config_path)
 
     def test_1d_tensor(self):
         """Load 1D tensor (e.g., bias, layernorm weight)."""
         expected = np.random.randn(576).astype(np.float32)
-        path = self.create_test_file({"norm_weight": expected})
+        st_path, config_path = self.create_test_file({"norm_weight": expected})
 
         try:
-            st = Safetensors(path)
+            st = Safetensors(st_path, config_path)
             actual = st.tensor_data["norm_weight"]
             assert actual.shape == (576,)
             np.testing.assert_array_almost_equal(actual, expected)
             st.close()
         finally:
-            os.unlink(path)
+            os.unlink(st_path)
+            os.unlink(config_path)
 
     def test_large_tensor(self):
         """Load realistically-sized tensor (embedding table)."""
         vocab_size, hidden_size = 49152, 576
         expected = np.random.randn(vocab_size, hidden_size).astype(np.float16)
-        path = self.create_test_file({"embed": expected})
+        st_path, config_path = self.create_test_file({"embed": expected})
 
         try:
-            st = Safetensors(path)
+            st = Safetensors(st_path, config_path)
             actual = st.tensor_data["embed"]
             assert actual.shape == (vocab_size, hidden_size)
             assert actual.dtype == np.float16
             st.close()
         finally:
-            os.unlink(path)
+            os.unlink(st_path)
+            os.unlink(config_path)
 
 
 class TestSafetensorsEdgeCases(TestSafetensorsLoading):
@@ -263,39 +300,42 @@ class TestSafetensorsEdgeCases(TestSafetensorsLoading):
     def test_empty_tensor(self):
         """Load tensor with zero elements."""
         expected = np.array([], dtype=np.float32).reshape(0, 64)
-        path = self.create_test_file({"empty": expected})
+        st_path, config_path = self.create_test_file({"empty": expected})
 
         try:
-            st = Safetensors(path)
+            st = Safetensors(st_path, config_path)
             actual = st.tensor_data["empty"]
             assert actual.shape == (0, 64)
             st.close()
         finally:
-            os.unlink(path)
+            os.unlink(st_path)
+            os.unlink(config_path)
 
     def test_scalar_tensor(self):
         """Load 0D (scalar) tensor."""
         expected = np.array(42.0, dtype=np.float32)
-        path = self.create_test_file({"scalar": expected})
+        st_path, config_path = self.create_test_file({"scalar": expected})
 
         try:
-            st = Safetensors(path)
+            st = Safetensors(st_path, config_path)
             actual = st.tensor_data["scalar"]
             assert actual.shape == ()
             assert actual[()] == 42.0
             st.close()
         finally:
-            os.unlink(path)
+            os.unlink(st_path)
+            os.unlink(config_path)
 
     def test_3d_tensor(self):
         """Load 3D tensor."""
         expected = np.random.randn(2, 3, 4).astype(np.float32)
-        path = self.create_test_file({"3d": expected})
+        st_path, config_path = self.create_test_file({"3d": expected})
 
         try:
-            st = Safetensors(path)
+            st = Safetensors(st_path, config_path)
             actual = st.tensor_data["3d"]
             assert actual.shape == (2, 3, 4)
             st.close()
         finally:
-            os.unlink(path)
+            os.unlink(st_path)
+            os.unlink(config_path)
