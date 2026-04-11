@@ -30,7 +30,7 @@ v0 establishes a correctness baseline using pure Python + NumPy on CPU. All late
 | F2 — RMSNorm | ✅ | Root Mean Square Layer Normalization |
 | F3 — RoPE | ✅ | Rotary Position Embedding |
 | F4 — Attention | ✅ | Multi-head attention with KV cache |
-| F5 — SwiGLU MLP | ☐ | Gated feed-forward network |
+| F5 — SwiGLU MLP | ✅ | Gated feed-forward network |
 | F6 — Decoder Block | ☐ | Full transformer layer stack |
 | F7 — KV Cache | ☐ | Naive contiguous cache |
 | F8 — Prefill/Decode | ☐ | Two-phase generation |

@@ -10,7 +10,7 @@ Plan: [`../architecture_v0.md`](../architecture_v0.md). Each feature below has (
 | F2  | RMSNorm                      | [`f02-rmsnorm.md`](f02-rmsnorm.md)                     | ✓      |
 | F3  | RoPE                         | [`f03-rope.md`](f03-rope.md)                           | ✓      |
 | F4  | Attention + KV-cache reads   | [`f04-attention.md`](f04-attention.md)                 | ✓      |
-| F5  | SwiGLU MLP                   | [`f05-swiglu-mlp.md`](f05-swiglu-mlp.md)               | ☐      |
+| F5  | SwiGLU MLP                   | [`f05-swiglu-mlp.md`](f05-swiglu-mlp.md)               | ✓      |
 | F6  | Decoder block + full forward | [`f06-decoder-forward.md`](f06-decoder-forward.md)     | ☐      |
 
 ## Runtime
