@@ -197,7 +197,7 @@ class TestAttentionForward:
         attn_scale = 1.0 / np.sqrt(head_dim)
 
         out = attention_forward(
-            q, k_cache, v_cache, head_dim, num_kv_heads, num_heads, attn_scale, mask=mask
+            q, k_cache, v_cache, num_kv_heads, num_heads, attn_scale, mask=mask
         )
 
         assert out.shape == (seq_len, num_heads, head_dim)
@@ -215,7 +215,7 @@ class TestAttentionForward:
         attn_scale = 1.0 / np.sqrt(head_dim)
 
         out = attention_forward(
-            q, k_cache, v_cache, head_dim, num_kv_heads, num_heads, attn_scale, mask=mask
+            q, k_cache, v_cache, num_kv_heads, num_heads, attn_scale, mask=mask
         )
 
         assert not np.any(np.isnan(out))
@@ -248,7 +248,7 @@ class TestAttentionIntegration:
         q, k = apply_rope(q, k, positions, cos_table, sin_table)
 
         # Use K, V as "cache" for simplicity
-        out = attention_forward(q, k, v, head_dim, num_kv_heads, num_heads, attn_scale, mask=mask)
+        out = attention_forward(q, k, v, num_kv_heads, num_heads, attn_scale, mask=mask)
 
         assert out.shape == (seq_len, num_heads, head_dim)
         assert not np.any(np.isnan(out))
