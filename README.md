@@ -28,8 +28,8 @@ v0 establishes a correctness baseline using pure Python + NumPy on CPU. All late
 |---------|--------|-------------|
 | F1 — Weight Loading | ✅ | Safetensors loader with memory mapping |
 | F2 — RMSNorm | ✅ | Root Mean Square Layer Normalization |
-| F3 — RoPE | ☐ | Rotary Position Embedding |
-| F4 — Attention | ☐ | Multi-head attention with KV cache |
+| F3 — RoPE | ✅ | Rotary Position Embedding |
+| F4 — Attention | ✅ | Multi-head attention with KV cache |
 | F5 — SwiGLU MLP | ☐ | Gated feed-forward network |
 | F6 — Decoder Block | ☐ | Full transformer layer stack |
 | F7 — KV Cache | ☐ | Naive contiguous cache |
@@ -62,6 +62,8 @@ pytest tests/ --cov=ladallm --cov-report=term-missing
 # Run specific feature tests
 pytest tests/test_safetensors.py -v   # F1: Weight loading
 pytest tests/test_rmsnorm.py -v       # F2: RMSNorm
+pytest tests/test_rope.py -v          # F3: RoPE
+pytest tests/test_attention.py -v     # F4: Attention
 ```
 
 ### Load a Model
@@ -104,14 +106,22 @@ vllm-from-scratch/
 │       ├── README.md           # Feature index
 │       ├── f01-weight-loading.md
 │       ├── f02-rmsnorm.md
+│       ├── f03-rope.md
+│       ├── f04-attention.md
 │       └── ...
 ├── src/ladallm/
 │   ├── __init__.py
 │   ├── safetensors.py          # F1: Weight loading
+│   ├── rope.py                 # F3: RoPE
+│   ├── attention.py            # F4: Attention
+│   ├── kvcache.py              # F4: KV cache
+│   ├── model.py                # F4: Model layer
 │   └── cli.py                  # CLI + F2: RMSNorm
 ├── tests/
 │   ├── test_safetensors.py     # F1 tests
 │   ├── test_rmsnorm.py         # F2 tests
+│   ├── test_rope.py            # F3 tests
+│   ├── test_attention.py       # F4 tests
 │   └── conftest.py             # Test fixtures
 ├── pyproject.toml
 └── README.md
