@@ -1,10 +1,12 @@
 """Llama model implementation for LadaLLM."""
 
+from typing import List, Optional
+
 import numpy as np
 
 from ladallm.attention import attention_forward, causal_mask, compute_qkv
 from ladallm.cli import rms_norm
-from ladallm.kvcache import KVCache
+from ladallm.kvcache import NaiveKVCache
 from ladallm.mlp import swiglu_mlp
 from ladallm.rope import apply_rope, precompute_rope_tables
 from ladallm.safetensors import Safetensors
@@ -75,15 +77,18 @@ class LlamaModel:
     def forward(
         self,
         input_ids: np.ndarray,
-        kv_cache: KVCache = None,
+        kv_caches: Optional[List[NaiveKVCache]] = None,
         is_prefill: bool = True,
     ) -> np.ndarray:
         """Run forward pass through all layers.
 
         Args:
             input_ids: Input token IDs [seq_len]
-            kv_cache: Optional KV cache for storing/retrieving K,V
-            is_prefill: True for prefill phase, False for decode
+            kv_caches: Optional list of KV caches, one per layer. If provided,
+                each layer will append its K,V to its cache and use cached
+                values from previous positions.
+            is_prefill: True for prefill phase (process full prompt),
+                False for decode phase (process single new token)
 
         Returns:
             logits: Output logits [seq_len, vocab_size]
@@ -95,11 +100,11 @@ class LlamaModel:
         positions = np.arange(len(input_ids), dtype=np.int32)
 
         # 3. Pass through all decoder blocks
-        for layer in self.layers:
+        for layer_idx, layer in enumerate(self.layers):
             x = layer.forward(
                 x=x,
                 positions=positions,
-                kv_cache=kv_cache,
+                kv_cache=kv_caches[layer_idx] if kv_caches else None,
                 cos_table=self.cos_table,
                 sin_table=self.sin_table,
                 is_prefill=is_prefill,
@@ -192,7 +197,7 @@ class LlamaDecoderBlock:
         self,
         x: np.ndarray,
         positions: np.ndarray,
-        kv_cache: KVCache,
+        kv_cache: Optional[NaiveKVCache],
         cos_table: np.ndarray,
         sin_table: np.ndarray,
         is_prefill: bool = True,
@@ -202,7 +207,8 @@ class LlamaDecoderBlock:
         Args:
             x: Input tensor [seq_len, hidden_size]
             positions: Position indices [seq_len]
-            kv_cache: KV cache for storing/retrieving K,V
+            kv_cache: KV cache for this layer. If provided, K/V are appended
+                to it and cached values from previous positions are used.
             cos_table: RoPE cos table [max_seq_len, head_dim/2]
             sin_table: RoPE sin table [max_seq_len, head_dim/2]
             is_prefill: True for prefill phase, False for decode
@@ -233,7 +239,7 @@ class LlamaDecoderBlock:
         # 4. Update cache and retrieve cached K,V
         if kv_cache is not None:
             kv_cache.append(k, v)
-            k_cached, v_cached = kv_cache[self.layer_idx]
+            k_cached, v_cached = kv_cache.get()
         else:
             k_cached, v_cached = k, v
 

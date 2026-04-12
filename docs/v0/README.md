@@ -17,7 +17,7 @@ Plan: [`../architecture_v0.md`](../architecture_v0.md). Each feature below has (
 
 | #   | Feature                    | Doc                                                  | Status |
 | --- | -------------------------- | ---------------------------------------------------- | ------ |
-| F7  | Naive KV cache             | [`f07-kv-cache.md`](f07-kv-cache.md)                 | ☐      |
+| F7  | Naive KV cache             | [`f07-kv-cache.md`](f07-kv-cache.md)                 | ✓      |
 | F8  | Prefill vs. decode split   | [`f08-prefill-decode.md`](f08-prefill-decode.md)     | ☐      |
 | F9  | Greedy sampler             | [`f09-greedy-sampler.md`](f09-greedy-sampler.md)     | ☐      |
 | F10 | FIFO scheduler             | [`f10-fifo-scheduler.md`](f10-fifo-scheduler.md)     | ☐      |
