@@ -90,7 +90,7 @@ def attention_forward(
     scores = np.einsum("qhd,khd->qkh", q, k) * attn_scale
 
     if mask is not None:
-        scores = scores + mask
+        scores = scores + mask[..., np.newaxis]
 
     weights = softmax(scores, axis=-1)
     return np.einsum("qkh,khd->qhd", weights, v)
